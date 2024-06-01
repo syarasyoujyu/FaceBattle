@@ -1,0 +1,1 @@
+def face_battle(theme: str, players: list[Player]) -> Result:
