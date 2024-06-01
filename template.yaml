@@ -29,6 +29,9 @@ Resources:
           Properties:
             Path: /hello
             Method: get
+      Environment:
+        Variables:
+          IS_MOCK: !Ref IS_MOCK
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function

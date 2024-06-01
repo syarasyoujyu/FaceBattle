@@ -1,7 +1,9 @@
 import json
 
-# import requests
-
+import requests
+from logic.battle import face_battle
+from model import Player
+from pathlib import Path
 
 def lambda_handler(event, context):
     """Sample pure Lambda function
@@ -33,10 +35,16 @@ def lambda_handler(event, context):
 
     #     raise e
 
+    players = [
+        Player(user_name='a', image_path=Path('a')),
+        Player(user_name='b', image_path=Path('b')),
+    ]
+
+    result = face_battle(theme="テストテーマ", players=players)
+
     return {
         "statusCode": 200,
         "body": json.dumps({
-            "message": "hello world",
-            # "location": ip.text.replace("\n", "")
+            "message": result.comment,
         }),
     }
