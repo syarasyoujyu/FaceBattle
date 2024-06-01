@@ -1,13 +1,10 @@
 {
-	"name": "facebattle",
+	"name": "${localWorkspaceFolderBasename}",
 	"image": "mcr.microsoft.com/devcontainers/python:3.9-bookworm",
 	"features": {
 		"ghcr.io/devcontainers/features/aws-cli:1": {},
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
 		"ghcr.io/customink/codespaces-features/sam-cli:1": {}
 	},
-	"runArgs": ["--add-host=host.docker.internal:host-gateway"],
-	"workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached",
-	"workspaceFolder": "${localWorkspaceFolder}",
-	"postCreateCommand": "python -m pip install -r hello_world/requirements.txt"
+	"postCreateCommand": "rm ~/.docker/config.json && python -m pip install -r hello_world/requirements.txt"
 }
