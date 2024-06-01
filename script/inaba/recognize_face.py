@@ -3,23 +3,16 @@ import base64
 import Jinja2
 from jinja2 import Template 
 from loguru import logger
-# OpenAI APIの各種キーを設定
-API_KEY = "APIキーをここに指定"
-API_BASE = "エンドポイントを指定"
-API_TYPE = "azure"
-API_VERSION = "2023-05-15"
-GPT_MODEL_NAME = "GPT-4oのデプロイ名をここに指定"
+import os
 
-# Azure OpenAIにリクエストを送信し、レスポンスを取得する関数
-def send_request_to_azure_openai(messages:str)->None:
+
+def send_request_to_azure_openai(messages:str)->str|None:
+    """Azure OpenAIにリクエストを送信し、レスポンスを取得する関数"""
     try:
-        openai.api_key = API_KEY
-        openai.api_base = API_BASE
-        openai.api_type = API_TYPE
-        openai.api_version = API_VERSION
+        openai.api_key = os.environ["API_KEY"]
 
         response = openai.ChatCompletion.create(
-            engine=GPT_MODEL_NAME,
+            model="gpt-4o",
             temperature=0.5,
             stream=False,
             top_p=1.0,
@@ -28,16 +21,32 @@ def send_request_to_azure_openai(messages:str)->None:
             frequency_penalty=0,
             messages=messages
         )
+        return response
     except Exception as e:
         logger.warning(e)
     return None
     
+def make_title()->str:
+    """タイトルを作成する関数"""
+    title_content="""あなたは、とても楽しく、友達たちとエンジョイできるようなパーティーの主催者です。そこで、
+あなたはどれだけお題に沿った顔を披露できるかというゲームを考えました。このゲームにピッタリなお題を考えてください。"""
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": title_content
+                }
+            ]
+        }
+    ]
+    response=send_request_to_azure_openai(messages)
+    return response['choices'][0]['message']['content']
 
 # メイン関数
-def Judje(title:str)->str:
-    # PNGファイルのパスを指定
-    file_path = '<ここにインプットしたいPNGファイルパスを指定'
-
+def Judje(title:str,file_path:str)->str:
+    """画像ファイル(png)を読み込んで、Azure OpenAIにリクエストを送信する関数"""
     # ファイルをバイナリモードで開いて読み込む
     with open(file_path, 'rb') as image_file:
         # ファイルの内容を読み込む
@@ -45,13 +54,17 @@ def Judje(title:str)->str:
 
     # data URIスキームに従ってフォーマットする
     image_url = f"data:image/png;base64,{encoded_string}"
-    content_template="""{{title}}にどれだけ沿っている顔か採点してください。"""
+    content_template="""{{title}}にどれだけ沿っている顔かを、100点満点で採点してください。"""
     content=Template(content_template).render(title=title)
     # メッセージリストを作成
     messages = [
         {
             "role": "user",
             "content": [
+                {
+                    "type": "system",
+                    "text": "点数のみを入力してください。点数以外を入力することを禁止します。"
+                },
                 {
                     "type": "text",
                     "text": content
@@ -71,11 +84,16 @@ def Judje(title:str)->str:
 
     # レスポンスにエラーが含まれているかチェックする
     if 'error' in response:
-        print(response['error'])
-    else:
-        # 応答内容を取得する
-        response_content = response['choices'][0]['message']['content']
-        print(response_content)
+        logger.warning(response['error'])
+        return None
+    
+    # 応答内容を取得する
+    response_content = response['choices'][0]['message']['content']
+    return response_content
 
 if __name__ == '__main__':
-    main()
+    title=make_title()
+    with open ('script/inaba/face_paths.txt','rb') as f:
+        file_paths=f.read().splitlines()
+    for file_path in file_paths:
+        Judje(title,file_path)
