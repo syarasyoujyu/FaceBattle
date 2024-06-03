@@ -5,6 +5,10 @@ from jinja2 import Template
 from loguru import logger
 import os,openai
 from litellm import completion
+from dotenv import load_dotenv
+
+#環境変数読み込み
+load_dotenv()
 
 def send_request_to_gpt4o(messages:list)->str|None:
     """リクエストを送信し、レスポンスを取得する関数"""
@@ -12,9 +16,8 @@ def send_request_to_gpt4o(messages:list)->str|None:
         response = completion(
             model="gpt-4o",
             messages=messages,
-            api_key=os.environ['OPENAI_API_KEY'],
+            api_key=os.environ['API_KEY'],
         )
-        print(response)
         return response['choices'][0]['message']['content']
     except Exception as e:
         logger.warning(e)
@@ -58,7 +61,8 @@ def Judje(title:str,file_path:str)->str:
 なお、画像は{{image_url}}です。
 例:
 {'point': 60, 'description': '恋人にとられた悲しさをしっかり表現しています。しかし、全体的に驚きの感情の強さが不足しており、眉や口の動きがやや弱いように感じられます。もう少し強い感情表現が必要です。'},
-{'point': 30, 'description': '目の前に好きなアイドルが現れた際の驚きや喜びがあまり伝わってきません。見た目にもう少し輝きや表情の明確な変化があると点数が上がるでしょう'}"""
+{'point': 30, 'description': '目の前に好きなアイドルが現れた際の驚きや喜びがあまり伝わってきません。見た目にもう少し輝きや表情の明確な変化があると点数が上がるでしょう'}
+{'point': 45, 'description': '目の驚きはある程度表現できていますが、全体的な表情が淡泊で、サプライズプレゼントをもらった時の強い喜びや驚きが十分に感じ取れません。もう少し口元や顔全体の明確な変化があると良いでしょう。'}"""
     content=Template(content_template).render(title=title,image_url=image_url)
     print(len(image_url))
     # メッセージリストを作成
@@ -75,12 +79,26 @@ def Judje(title:str,file_path:str)->str:
     
     # Azure OpenAIにリクエストを送信し、レスポンスを取得する
     response = send_request_to_gpt4o(messages)
-    
-    return response
+    Json_response=response[response.find("{"):response.find("}")]
+    return Json_response
 
 if __name__ == '__main__':
     with open ('script/inaba/face_paths.txt','rb') as f:
         file_paths=f.read().splitlines()[:1]
     title=make_title()
     for file_path in file_paths:
-        Judje(title,file_path)
+        content=Judje(title,file_path)
+        #pointとdescriptionを取得
+        point_from=content.find('point')+7
+        point_to=content.find('description')-3
+        description_from=content.find('description')+15
+        description_to=len(content)-3
+        point_str=content[point_from:point_to+1]
+        delete_strings=[',',' ','　','\n']
+        for delete_string in delete_strings:
+            point_str=point_str.replace(delete_string,'')
+        point=int(point_str)
+        description=content[description_from:description_to+1]
+        #pointとdescriptionを出力
+        print(title,point,description)
+        
