@@ -10,8 +10,14 @@ from PIL import Image
 from PIL import Image
 import base64
 import os
+from pydantic import BaseModel
 #環境変数を読み込む
 load_dotenv()
+
+class Player(BaseModel):
+    name:str
+    point:int
+    description:str
 
 def resize_image(path, max_size=300):
     """画像をリサイズ"""
@@ -97,6 +103,8 @@ def Judje(title:str,file_path:str)->str:
     return Json_response
 
 if __name__ == '__main__':
+    #playerのリストを作成
+    players=[]
     with open ('script/inaba/face_paths.txt','rb') as f:
         file_paths=f.read().splitlines()
     title=make_title()
@@ -115,6 +123,7 @@ if __name__ == '__main__':
         point=int(point_str)
         description=content[description_from:description_to+1]
         
-        #pointとdescriptionを出力
-        print(title,point,description)
-        
+        player=Player(name='inaba',point=point,description=description,image_url=file_path)
+        players.append(player)
+    #playerをpointでソート
+    players.sort(key=lambda x:x.point,reverse=True)
