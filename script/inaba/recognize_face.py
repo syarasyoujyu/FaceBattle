@@ -10,9 +10,12 @@ from PIL import Image
 from PIL import Image
 import base64
 import os
+#環境変数を読み込む
+load_dotenv()
 
-def resize_image(input_path, output_path, max_size=300):
-    with Image.open(input_path) as img:
+def resize_image(path, max_size=300):
+    """画像をリサイズ"""
+    with Image.open(path) as img:
         # 縮小する比率を計算する
         ratio = min(max_size / img.size[0], max_size / img.size[1])
         new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
@@ -21,9 +24,7 @@ def resize_image(input_path, output_path, max_size=300):
         resized_img = img.resize(new_size, Image.LANCZOS)
         
         # 画像を保存する
-        resized_img.save(output_path)
-#環境変数読み込み
-load_dotenv()
+        resized_img.save(path)
 
 def send_request_to_gpt4o(messages:list)->str|None:
     """リクエストを送信し、レスポンスを取得する関数"""
@@ -66,19 +67,18 @@ def Judje(title:str,file_path:str)->str:
     # ファイルをバイナリモードで開いて読み込む
     with open(file_path, 'rb') as image_file:
         # ファイルの内容を読み込む(３万以上だとOUT！)
-        resize_image(file_path, file_path)
+        resize_image(file_path)
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-    print(len(encoded_string))
     # data URIスキームに従ってフォーマットする
     image_url = f"data:image/png;base64,{encoded_string}"
     content_template="""
-お題[{{title}}]にどれだけ沿っている顔かを、100点満点でシビア目に採点し、その点数をpointに書いてください。
+お題[{{title}}]にどれだけ沿っている顔かを、100点満点でシビア目に、１点刻みで採点し、その点数をpointに書いてください。
 その後、採点理由をdescriptionに簡潔に記述してください。
 なお、画像は{{image_url}}です。
 例:
-{'point': 60, 'description': '恋人にとられた悲しさをしっかり表現しています。しかし、全体的に驚きの感情の強さが不足しており、眉や口の動きがやや弱いように感じられます。もう少し強い感情表現が必要です。'},
-{'point': 30, 'description': '目の前に好きなアイドルが現れた際の驚きや喜びがあまり伝わってきません。見た目にもう少し輝きや表情の明確な変化があると点数が上がるでしょう'}
-{'point': 45, 'description': '目の驚きはある程度表現できていますが、全体的な表情が淡泊で、サプライズプレゼントをもらった時の強い喜びや驚きが十分に感じ取れません。もう少し口元や顔全体の明確な変化があると良いでしょう。'}"""
+{'point': 57, 'description': '恋人にとられた悲しさをしっかり表現しています。しかし、全体的に驚きの感情の強さが不足しており、眉や口の動きがやや弱いように感じられます。もう少し強い感情表現が必要です。'},
+{'point': 34, 'description': '目の前に好きなアイドルが現れた際の驚きや喜びがあまり伝わってきません。見た目にもう少し輝きや表情の明確な変化があると点数が上がるでしょう'}
+{'point': 47, 'description': '目の驚きはある程度表現できていますが、全体的な表情が淡泊で、サプライズプレゼントをもらった時の強い喜びや驚きが十分に感じ取れません。もう少し口元や顔全体の明確な変化があると良いでしょう。'}"""
     content=Template(content_template).render(title=title,image_url=image_url)    # メッセージリストを作成
     messages = [
         {
@@ -102,6 +102,7 @@ if __name__ == '__main__':
     title=make_title()
     for file_path in file_paths:
         content=Judje(title,file_path)
+        
         #pointとdescriptionを取得
         point_from=content.find('point')+7
         point_to=content.find('description')-3
@@ -113,6 +114,7 @@ if __name__ == '__main__':
             point_str=point_str.replace(delete_string,'')
         point=int(point_str)
         description=content[description_from:description_to+1]
+        
         #pointとdescriptionを出力
         print(title,point,description)
         
