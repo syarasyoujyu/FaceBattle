@@ -1,2 +1,3 @@
-/home/yoko/workspace/FaceBattle/faces/face.jpg
+/home/yoko/workspace/FaceBattle/faces/face1.jpg
+/home/yoko/workspace/FaceBattle/faces/face2.jpg
 /home/yoko/workspace/FaceBattle/faces/face2.jpg

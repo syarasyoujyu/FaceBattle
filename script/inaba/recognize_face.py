@@ -6,7 +6,22 @@ from loguru import logger
 import os,openai
 from litellm import completion
 from dotenv import load_dotenv
+from PIL import Image
+from PIL import Image
+import base64
+import os
 
+def resize_image(input_path, output_path, max_size=300):
+    with Image.open(input_path) as img:
+        # 縮小する比率を計算する
+        ratio = min(max_size / img.size[0], max_size / img.size[1])
+        new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
+        
+        # 画像をリサイズする
+        resized_img = img.resize(new_size, Image.LANCZOS)
+        
+        # 画像を保存する
+        resized_img.save(output_path)
 #環境変数読み込み
 load_dotenv()
 
@@ -51,8 +66,9 @@ def Judje(title:str,file_path:str)->str:
     # ファイルをバイナリモードで開いて読み込む
     with open(file_path, 'rb') as image_file:
         # ファイルの内容を読み込む(３万以上だとOUT！)
+        resize_image(file_path, file_path)
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-
+    print(len(encoded_string))
     # data URIスキームに従ってフォーマットする
     image_url = f"data:image/png;base64,{encoded_string}"
     content_template="""
@@ -63,9 +79,7 @@ def Judje(title:str,file_path:str)->str:
 {'point': 60, 'description': '恋人にとられた悲しさをしっかり表現しています。しかし、全体的に驚きの感情の強さが不足しており、眉や口の動きがやや弱いように感じられます。もう少し強い感情表現が必要です。'},
 {'point': 30, 'description': '目の前に好きなアイドルが現れた際の驚きや喜びがあまり伝わってきません。見た目にもう少し輝きや表情の明確な変化があると点数が上がるでしょう'}
 {'point': 45, 'description': '目の驚きはある程度表現できていますが、全体的な表情が淡泊で、サプライズプレゼントをもらった時の強い喜びや驚きが十分に感じ取れません。もう少し口元や顔全体の明確な変化があると良いでしょう。'}"""
-    content=Template(content_template).render(title=title,image_url=image_url)
-    print(len(image_url))
-    # メッセージリストを作成
+    content=Template(content_template).render(title=title,image_url=image_url)    # メッセージリストを作成
     messages = [
         {
             "role": "system",
@@ -84,7 +98,7 @@ def Judje(title:str,file_path:str)->str:
 
 if __name__ == '__main__':
     with open ('script/inaba/face_paths.txt','rb') as f:
-        file_paths=f.read().splitlines()[:1]
+        file_paths=f.read().splitlines()
     title=make_title()
     for file_path in file_paths:
         content=Judje(title,file_path)
