@@ -44,28 +44,6 @@ def send_request_to_gpt4o(messages:list)->str|None:
     except Exception as e:
         logger.warning(e)
     return None
-    
-def make_title()->str:
-    """タイトルを作成する関数"""
-    title_content="""あなたは、とても楽しく、友達たちとエンジョイできるようなパーティーの主催者です。そこで、
-あなたはどれだけお題に沿った顔を披露できるかというゲームを考えました。このゲームにピッタリで、採点できそうなお題を1つだけ考えてくださいできるだけパーティーの盛り上がりにつながるようなお題を考えてください。
-なお、お題以外の情報を入力することを禁止します。
-例：
-移動教室を間違えた顔
-マンガのネタバレを食らった顔
-お風呂に入るのが嫌な顔
-マリオカートで優勝した顔
-先生をママと呼んだ時の顔
-ハメ技を食らった顔
-"""
-    messages=[
-        {
-            "role": "user",
-            "content": title_content
-        }
-    ]
-    response=send_request_to_gpt4o(messages)
-    return response
 
 # メイン関数
 def Judje(title:str,file_path:str)->str:
@@ -102,12 +80,48 @@ def Judje(title:str,file_path:str)->str:
     Json_response=response[response.find("{"):response.find("}")]
     return Json_response
 
+def praise_top_player(top_player:Player,title:str)->str:
+    """優勝者を褒めるコメントを作成する関数"""
+    praise_template="""{{top_player_description}}から、{{top_player_name}}さんのどこが評価されたのかを述べて、ほめてください。なお、この大会は「{{title}}の真似をする大会」で、コメントは一文でお願いします。
+例1:SSAMMAさんは、怒りの表情がとてもよく表れているという点で、非常に優れています!
+例2:UMMAさんは、マリオカートで勝った時特有の喜びがとてもよく表れていて、素晴らしいです!
+"""
+    top_player_name,top_player_description=top_player.name,top_player.description
+    praise_content=Template(source=praise_template).render(top_player_name=top_player_name,top_player_description=top_player_description,title=title)
+    messages=[
+        {
+            "role":"user",
+            "content":praise_content
+        }
+    ]
+    response=send_request_to_gpt4o(messages)
+    return response
+    
+
+def make_comment(top_players:list,title:str)->str:
+    """優勝者の名前を受け取り、コメントを作成する関数"""
+    top_player_names=[player.name for player in top_players]
+    praise_comments=[praise_top_player(player,title) for player in top_players]
+    point=top_players[0].point
+    comment="""優勝者は{{point}}点で、
+{% for top_player_name  in top_player_names %}{{top_player_name}}さん{% if loop.index < top_player_names|length %},{% endif %}{% endfor %}
+です！おめでとうございます！
+{% for praise_comment in praise_comments %}
+{{praise_comment}}
+{% endfor %}
+"""
+    comment=Template(comment).render(point=point,top_player_names=top_player_names,praise_comments=praise_comments)
+    return comment
+    
+    
+
+
 if __name__ == '__main__':
     #playerのリストを作成
     players=[]
     with open ('script/inaba/face_paths.txt','rb') as f:
         file_paths=f.read().splitlines()
-    title=make_title()
+    title="怒っている顔"
     for file_path in file_paths:
         content=Judje(title,file_path)
         
@@ -122,8 +136,14 @@ if __name__ == '__main__':
             point_str=point_str.replace(delete_string,'')
         point=int(point_str)
         description=content[description_from:description_to+1]
-        
         player=Player(name='inaba',point=point,description=description,image_url=file_path)
         players.append(player)
     #playerをpointでソート
     players.sort(key=lambda x:x.point,reverse=True)
+    #優勝者を決める
+    top_point=players[0].point
+    top_players=[player for player in players if player.point==top_point]
+    top_player_names=[player.name for player in top_players]
+    comment=make_comment(top_players,title)
+    print(comment)
+    
