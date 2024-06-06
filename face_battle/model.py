@@ -9,3 +9,6 @@ class Player(BaseModel):
 class Result(BaseModel):
     ranking: list[Player]
     comment: str
+
+    def output(self) -> str:
+        return "\n".join([f"{player.user_name}" for player in self.ranking]) + f"\n{self.comment}"
