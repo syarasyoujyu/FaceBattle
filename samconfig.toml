@@ -19,8 +19,9 @@ confirm_changeset = true
 resolve_s3 = true
 s3_prefix = "facebattle"
 region = "ap-northeast-1"
-profile = "pg"
 image_repositories = []
+disable_rollback = true
+parameter_overrides = "SlackSigningSecret=\"\" SlackBotToken=\"\" OpenaiApiKey=\"\""
 
 [default.package.parameters]
 resolve_s3 = true

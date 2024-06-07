@@ -2,3 +2,7 @@ requests
 pydantic
 loguru
 slack-bolt
+openai
+Pillow
+litellm
+jinja2

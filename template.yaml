@@ -12,7 +12,9 @@ Parameters:
   SlackBotToken:
     Type: String
     Default: ""
-  
+  OpenaiApiKey:
+    Type: String
+    Default: ""
 Resources:
   LambdaRole:
     Type: "AWS::IAM::Role"
@@ -53,6 +55,7 @@ Resources:
         Variables:
           SLACK_SIGNING_SECRET: !Ref SlackSigningSecret
           SLACK_BOT_TOKEN: !Ref SlackBotToken
+          OPENAI_API_KEY: !Ref OpenaiApiKey
       Events:
         Slack:
           Type: HttpApi

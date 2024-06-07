@@ -1,14 +1,14 @@
 from pydantic import BaseModel
-from pathlib import Path
-
 
 class Player(BaseModel):
     user_name: str
-    image_path: Path
+    image_path: str
+    point:int
+    description:str
 
 class Result(BaseModel):
     ranking: list[Player]
     comment: str
 
-    def output(self) -> str:
-        return "\n".join([f"{player.user_name}" for player in self.ranking]) + f"\n{self.comment}"
+    def output(self,theme) -> str:
+        return f"お題：{theme}\n"+"\n".join([f"\n{player.user_name}:{player.point}点" for player in self.ranking]) + f"\n{self.comment}"
