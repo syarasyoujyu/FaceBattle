@@ -42,6 +42,7 @@ def send_request_to_gpt4o(messages:list)->str:
             model="gpt-4o",
             messages=messages,
             api_key=os.environ["OPENAI_API_KEY"],
+            temperature=0,
         )
         return response['choices'][0]['message']['content']
     except Exception as e:
@@ -66,7 +67,6 @@ def point_and_descript(theme:str,image_path:str)->Tuple[int,str]:
 {'point': 34, 'description': '目の前に好きなアイドルが現れた際の驚きや喜びがあまり伝わってきません。見た目にもう少し輝きや表情の明確な変化があると点数が上がるでしょう'}
 {'point': 47, 'description': '目の驚きはある程度表現できていますが、全体的な表情が淡泊で、サプライズプレゼントをもらった時の強い喜びや驚きが十分に感じ取れません。もう少し口元や顔全体の明確な変化があると良いでしょう。'}"""
     content=Template(content_template).render(theme=theme,image_url=image_url)    # メッセージリストを作成
-    pprint(len(image_url))
     messages = [
         {
             "role": "system",
@@ -119,7 +119,7 @@ def judge(body, say):
     theme = texts[1]
     
     for message in responses["messages"]:
-
+        pprint(message.get("text","____________________"))
         files = message.get("files", [])
         if files == []:
             continue
