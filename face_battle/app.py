@@ -23,7 +23,7 @@ def just_ack(ack: Ack):
     ack()
 
 
-def resize_image(path:str, max_size:int=200):
+def resize_image(path:str, max_size:int=100):
     """画像をリサイズ"""
     with Image.open(path) as img:
         # 縮小する比率を計算する
