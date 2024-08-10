@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  facebattle
+
+  Sample SAM Template for facebattle
+
+Parameters:
+  SlackSigningSecret:
+    Type: String
+    Default: ""
+  SlackBotToken:
+    Type: String
+    Default: ""
+  OpenaiApiKey:
+    Type: String
+    Default: ""
+Resources:
+  LambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: facebattle-lambda-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: allow-lambda-invocation
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - lambda:InvokeAsync
+                Resource: "*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  FaceBattleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: face_battle/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          SLACK_SIGNING_SECRET: !Ref SlackSigningSecret
+          SLACK_BOT_TOKEN: !Ref SlackBotToken
+          OPENAI_API_KEY: !Ref OpenaiApiKey
+      Events:
+        Slack:
+          Type: HttpApi
+          Properties:
+            Method: POST
+            Path: /slack
+            TimeoutInMillis: 10000
+            PayloadFormatVersion: "2.0"
+            RouteSettings:
+              ThrottlingBurstLimit: 100
+              ThrottlingRateLimit: 200
+
+  FaceBattleFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${FaceBattleFunction}
+      RetentionInDays: 14
